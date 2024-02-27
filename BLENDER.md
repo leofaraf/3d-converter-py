@@ -1,0 +1,1 @@
+See [Blender's license](https://www.blender.org/about/license/) for more details.
