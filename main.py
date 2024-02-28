@@ -1,76 +1,90 @@
-from utils import logger
-import sys
+from tkinter import filedialog
+from tkinter.messagebox import showinfo
+from warnings import showwarning
+from utils import logger, blender
 import logging
+import tkinter as tk
 import bpy
+from tkinter import *
 
-# --------------------------------------------------------------------
-# Enable Plugins
-# --------------------------------------------------------------------
+class App:
+    def __init__(self) -> None:
+        self.root = tk.Tk()
+        self.root.title("3D models convertor")
+        self.root.geometry("250x250")
+        self.var = StringVar()
+        self.var.set("Input file ins't picked")
+        self.input_path = None
 
-logger.configure_logger("true")
-bpy.ops.wm.read_factory_settings(use_empty=True)
+        open_button = tk.Button(
+            self.root,
+            text='Pick a File',
+            command=self.select_file
+        )
 
-# --------------------------------------------------------------------
-# Initing
-# --------------------------------------------------------------------
+        open_button.pack(expand=True)
 
-PROGRAM_NAME, INPUT_PATH, OUTPUT_PATH = sys.argv
-INPUT_FORMAT = INPUT_PATH.split(".")[-1]
-OUTPUT_FORMAT = OUTPUT_PATH.split(".")[-1]
-logging.info(f"Program \"{PROGRAM_NAME}\" started")
+        l = Label(self.root, textvariable = self.var)
+        l.pack(expand=True)
 
-# --------------------------------------------------------------------
-# Main
-# --------------------------------------------------------------------
+        convert_button = tk.Button(
+            self.root,
+            text='Convert and Save as',
+            command=self.save_file
+        )
+        convert_button.pack(expand=True)
+        self.root.mainloop()
 
-try:
-    match INPUT_FORMAT:
-        case "obj":
-            bpy.ops.import_scene.obj(filepath=INPUT_PATH, axis_forward="-Z", axis_up="Y")
+    def select_file(self):
+        filetypes = [
+            ('obj, dae, glb, fbx, ply, stl', '*.obj;*.dae;*.glb;*.fbx;*.ply;*.stl')
+        ]
 
-        case "dae":
-            bpy.ops.wm.collada_import(filepath=INPUT_PATH)
+        input_path = filedialog.askopenfilename(
+            title='Pick an input file',
+            initialdir='/',
+            filetypes=filetypes)
 
-        case "glb":
-            bpy.ops.import_scene.gltf(filepath=INPUT_PATH, filter_glob=".glb")
+        if input_path:
+            self.var.set("Input file is picked\nPress to the button under")
+            self.input_path = input_path
 
-        case "fbx":
-            bpy.ops.import_scene.fbx(filepath=INPUT_PATH)
+    def save_file(self):
+        filetypes = (
+            ('.OBJ', '*.obj'),
+            ('.DAE', '*.dae'),
+            ('.GLB', '*.glb'),
+            ('.FBX', '*.fbx'),
+            ('.PLY', '*.ply'),
+            ('.STL', '*.stl')
+        )
 
-        case "ply":
-            bpy.ops.wm.ply_import(filepath=INPUT_PATH, forward_axis="NEGATIVE_Z", up_axis="Y")
+        output_path = filedialog.asksaveasfilename(
+            title="Save As",
+            filetypes=filetypes,
+            initialdir="./",
+            defaultextension=".obj"
+        )
+        
+        if output_path:
+            if self.input_path == None:
+                showinfo(
+                    "Warning",
+                    "Please, pick a input file before converting!"
+                )
+            else:
+                blender.convert(
+                    self.input_path,
+                    self.input_path.split(".")[-1],
+                    output_path,
+                    output_path.split(".")[-1]
+                )
+                showinfo(
+                    "Info",
+                    "Successful"
+                )
+            
 
-        case "stl":
-            bpy.ops.import_mesh.stl(filepath=INPUT_PATH)
-    logging.info("Successful importing!")
-
-    try:
-        match OUTPUT_FORMAT:
-            case "obj":
-                bpy.ops.export_scene.obj(filepath=OUTPUT_PATH, axis_forward="-Z", axis_up="Y")
-
-            case "dae":
-                bpy.ops.wm.collada_export(filepath=OUTPUT_PATH)
-
-            case "glb":
-                bpy.ops.export_scene.gltf(filepath=OUTPUT_PATH, export_format="GLB")
-
-            case "fbx":
-                bpy.ops.export_scene.fbx(filepath=OUTPUT_PATH, axis_forward="-Z", axis_up="Y")
-
-            case "ply":
-                bpy.ops.export_mesh.ply(filepath=OUTPUT_PATH, axis_forward="-Z", axis_up="Y")
-
-            case "stl":
-                bpy.ops.export_mesh.stl(filepath=OUTPUT_PATH)
-        logging.info("Successful exporting!")
-    except Exception as e:
-        logging.error("Exporting error: {}", e)
-except Exception as e:
-    logging.error("Importing error: {}", e)
-
-# --------------------------------------------------------------------
-# Exiting
-# --------------------------------------------------------------------
-
-logging.info("Program stopped")
+if __name__ == "__main__":
+    logger.configure_logger(True)
+    app = App()

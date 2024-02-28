@@ -19,4 +19,4 @@ high-performance python 3d models convertor
 ## how to use:
 
 - save your model which should be converted to data/
-- `python main.py data/*input_filename.input_format* data/output_filename.output_foramt`. example: `python main.py data/example.obj data/example.stl`
+- `python cli.py data/*input_filename.input_format* data/output_filename.output_foramt`. example: `python cli.py data/example.obj data/example.stl`
